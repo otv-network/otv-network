@@ -1,0 +1,78 @@
+-- Run once in the Supabase SQL editor as the project owner.
+begin;
+create schema if not exists private;
+revoke all on schema private from public;
+grant usage on schema private to anon, authenticated;
+create table public.roles(user_id uuid primary key references auth.users on delete cascade, role text not null default 'viewer' check(role in('viewer','developer','admin')),permissions jsonb not null default '{}'::jsonb);
+create function private.is_admin() returns boolean language sql stable security definer set search_path='' as $$select exists(select 1 from public.roles where user_id=auth.uid() and role='admin')$$;
+create function private.can_edit(entity text) returns boolean language sql stable security definer set search_path='' as $$select private.is_admin() or exists(select 1 from public.roles where user_id=auth.uid() and role='developer' and permissions->entity='true'::jsonb)$$;
+create function private.can_publish() returns boolean language sql stable security definer set search_path='' as $$select private.is_admin() or exists(select 1 from public.roles where user_id=auth.uid() and role='developer' and permissions->'publish'='true'::jsonb)$$;
+revoke all on function private.is_admin(),private.can_edit(text),private.can_publish() from public;
+grant execute on function private.is_admin(),private.can_edit(text),private.can_publish() to anon,authenticated;
+create table public.programmes(id uuid primary key default gen_random_uuid(),owner_id uuid not null references auth.users,title text not null check(length(title)>0),description text default '',body text default '',category text default '',tags text default '',creator text default '',premiere_date date,thumbnail text default '',banner text default '',featured boolean default false,status text not null default 'draft' check(status in('draft','review','published')),publish_at timestamptz,created_at timestamptz default now(),updated_at timestamptz default now());
+create table public.episodes(id uuid primary key default gen_random_uuid(),owner_id uuid not null references auth.users,programme_id uuid not null references public.programmes on delete cascade,title text not null check(length(title)>0),description text default '',season integer check(season>0),episode_number integer check(episode_number>0),youtube_url text default '',duration text default '',thumbnail text default '',status text not null default 'draft' check(status in('draft','review','published')),publish_at timestamptz,created_at timestamptz default now(),updated_at timestamptz default now());
+create table public.articles(id uuid primary key default gen_random_uuid(),owner_id uuid not null references auth.users,programme_id uuid references public.programmes on delete set null,title text not null check(length(title)>0),description text default '',body text default '',author text default '',category text default '',youtube_url text default '',thumbnail text default '',status text not null default 'draft' check(status in('draft','review','published')),publish_at timestamptz,created_at timestamptz default now(),updated_at timestamptz default now());
+create table public.broadcasts(id uuid primary key default gen_random_uuid(),owner_id uuid not null references auth.users,programme_id uuid references public.programmes on delete set null,title text not null check(length(title)>0),description text default '',starts_at timestamptz not null,ends_at timestamptz not null check(ends_at>starts_at),youtube_url text default '',thumbnail text default '',broadcast_status text not null default 'scheduled' check(broadcast_status in('scheduled','live','ended','cancelled')),status text not null default 'draft' check(status in('draft','review','published')),publish_at timestamptz,created_at timestamptz default now(),updated_at timestamptz default now());
+create table public.announcements(id uuid primary key default gen_random_uuid(),owner_id uuid not null references auth.users,title text not null,description text default '',link text default '',expires_at timestamptz,status text not null default 'draft' check(status in('draft','review','published')),publish_at timestamptz,created_at timestamptz default now(),updated_at timestamptz default now());
+create table public.settings(id text primary key,value jsonb not null default '{}'::jsonb);
+insert into public.settings values('site','{"headline":"Original Shows.\nLive Events.\nMade in Roblox.","description":"Entertainment, news, gameshows and more — all on OTV.","timezone":"Europe/London","sections":["hero","shows","live","episodes","news"],"hidden":[],"theme":"default"}');
+create table public.applications(id uuid primary key default gen_random_uuid(),user_id uuid unique not null references auth.users on delete cascade,display_name text not null,roblox_username text default '',reason text not null,status text not null default 'pending' check(status in('pending','approved','rejected')),created_at timestamptz default now());
+create table public.favourites(user_id uuid references auth.users on delete cascade,programme_id uuid references public.programmes on delete cascade,primary key(user_id,programme_id));
+create table public.media(id uuid primary key default gen_random_uuid(),owner_id uuid not null references auth.users,path text not null unique,url text not null,created_at timestamptz default now());
+create table public.activity(id bigint generated always as identity primary key,actor_id uuid,entity text not null,action text not null,record_id uuid,created_at timestamptz default now());
+create function private.audit_content() returns trigger language plpgsql security definer set search_path='' as $$begin insert into public.activity(actor_id,entity,action,record_id) values(auth.uid(),tg_table_name,tg_op,coalesce(new.id,old.id));if tg_op='DELETE' then return old;end if;new.updated_at=now();return new;end$$;
+create function private.guard_content() returns trigger language plpgsql set search_path='' as $$begin
+if tg_op='UPDATE' and new.owner_id<>old.owner_id and not private.is_admin() then raise exception 'Only an administrator may reassign content';end if;
+if tg_table_name='episodes' then
+if not private.is_admin() and not exists(select 1 from public.programmes p where p.id=new.programme_id and p.owner_id=auth.uid()) then raise exception 'Episodes require an owned programme';end if;
+end if;return new;end$$;
+do $$declare t text;begin foreach t in array array['programmes','episodes','articles','broadcasts','announcements'] loop
+execute format('alter table public.%I enable row level security',t);
+execute format('revoke all on public.%I from anon,authenticated',t);
+execute format('grant select on public.%I to anon',t);
+execute format('grant select,insert,update,delete on public.%I to authenticated',t);
+execute format('create policy public_read on public.%I for select to anon,authenticated using(status=''published'' and (publish_at is null or publish_at<=now()))',t);
+execute format('create policy team_read on public.%I for select to authenticated using(private.is_admin() or (owner_id=auth.uid() and private.can_edit(%L)))',t,t);
+execute format('create policy team_insert on public.%I for insert to authenticated with check(private.is_admin() or (owner_id=auth.uid() and private.can_edit(%L) and (status<>''published'' or private.can_publish())))',t,t);
+execute format('create policy team_update on public.%I for update to authenticated using(private.is_admin() or(owner_id=auth.uid() and private.can_edit(%L))) with check(private.is_admin() or(owner_id=auth.uid() and private.can_edit(%L) and(status<>''published'' or private.can_publish())))',t,t,t);
+execute format('create policy team_delete on public.%I for delete to authenticated using(private.is_admin() or(owner_id=auth.uid() and private.can_edit(%L)))',t,t);
+execute format('create index on public.%I(owner_id)',t);
+execute format('create index on public.%I(status,publish_at)',t);
+execute format('create trigger content_guard before insert or update on public.%I for each row execute function private.guard_content()',t);
+execute format('create trigger content_audit before insert or update or delete on public.%I for each row execute function private.audit_content()',t);
+end loop;end$$;
+-- Episodes of a draft programme must remain private, even if individually published.
+drop policy public_read on public.episodes;
+create policy public_read on public.episodes for select to anon,authenticated using(status='published' and(publish_at is null or publish_at<=now()) and exists(select 1 from public.programmes p where p.id=programme_id and p.status='published' and(p.publish_at is null or p.publish_at<=now())));
+do $$declare t text;begin foreach t in array array['roles','settings','applications','favourites','media','activity'] loop execute format('alter table public.%I enable row level security',t);execute format('revoke all on public.%I from anon,authenticated',t);end loop;end$$;
+grant select,insert,update,delete on public.roles,public.settings to authenticated;
+grant select on public.settings to anon;
+grant select,insert on public.applications,public.media to authenticated;
+grant select,insert,update,delete on public.favourites to authenticated;
+grant select on public.activity to authenticated;
+create policy role_read on public.roles for select to authenticated using(user_id=auth.uid() or private.is_admin());
+create policy role_admin on public.roles for all to authenticated using(private.is_admin()) with check(private.is_admin());
+create policy settings_read on public.settings for select to anon,authenticated using(true);
+create policy settings_write on public.settings for all to authenticated using(private.is_admin()) with check(private.is_admin());
+create policy applications_read on public.applications for select to authenticated using(user_id=auth.uid() or private.is_admin());
+create policy application_insert on public.applications for insert to authenticated with check(user_id=auth.uid() and status='pending');
+create policy favourites_owner on public.favourites for all to authenticated using(user_id=auth.uid()) with check(user_id=auth.uid());
+create policy media_read on public.media for select to authenticated using(owner_id=auth.uid() or private.is_admin());
+create policy media_insert on public.media for insert to authenticated with check(owner_id=auth.uid() and (private.can_edit('programmes') or private.can_edit('episodes') or private.can_edit('articles')));
+create policy activity_read on public.activity for select to authenticated using(private.is_admin());
+create index on public.episodes(programme_id);create index on public.articles(programme_id);create index on public.broadcasts(starts_at);create index on public.media(owner_id);
+create function public.review_application(application_id uuid,approve boolean) returns void language plpgsql security definer set search_path='' as $$declare uid uuid;begin
+if not private.is_admin() then raise exception 'Administrator access required';end if;
+select user_id into uid from public.applications where id=application_id and status='pending' for update;
+if uid is null then raise exception 'Pending application not found';end if;
+update public.applications set status=case when approve then 'approved' else 'rejected' end where id=application_id;
+if approve then insert into public.roles(user_id,role,permissions) values(uid,'developer','{"programmes":true,"episodes":true,"articles":true}') on conflict(user_id) do update set role='developer',permissions=excluded.permissions where public.roles.role<>'admin';end if;
+insert into public.activity(actor_id,entity,action,record_id) values(auth.uid(),'applications',case when approve then 'APPROVE' else 'REJECT' end,application_id);
+end$$;
+revoke all on function public.review_application(uuid,boolean) from public;
+grant execute on function public.review_application(uuid,boolean) to authenticated;
+insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types) values('otv-media','otv-media',true,5242880,array['image/jpeg','image/png','image/webp']);
+create policy otv_upload on storage.objects for insert to authenticated with check(bucket_id='otv-media' and (storage.foldername(name))[1]=auth.uid()::text and(private.can_edit('programmes') or private.can_edit('articles') or private.can_edit('episodes')));
+create policy otv_media_read on storage.objects for select to authenticated using(bucket_id='otv-media' and((storage.foldername(name))[1]=auth.uid()::text or private.is_admin()));
+create policy otv_media_delete on storage.objects for delete to authenticated using(bucket_id='otv-media' and((storage.foldername(name))[1]=auth.uid()::text or private.is_admin()));
+commit;
