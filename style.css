@@ -3,5 +3,6 @@
 @media(min-width:601px) and (max-width:760px){.hero{grid-template-columns:1fr}.hero h1{font-size:38px}.hero-art{min-height:220px}.hero p{max-width:460px}}
 
 /* Official OTV artwork: preserve original proportions and colours. */
-.logo{background:none;color:inherit;padding:0;letter-spacing:normal;line-height:0;flex-shrink:0;width:96px}.logo img{display:block;width:100%;height:auto;object-fit:contain}footer .logo{width:72px}#intro .logo{width:190px}@media(max-width:600px){header .logo{width:78px}}
+.logo{background:none;color:inherit;padding:0;letter-spacing:normal;line-height:0;flex-shrink:0;width:72px}.logo img{display:block;width:100%;height:auto;object-fit:contain}footer .logo{width:56px}#intro .logo{width:140px}@media(max-width:600px){header .logo{width:64px}}
+
 
