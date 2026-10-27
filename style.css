@@ -38,3 +38,14 @@ main.home-page>:not(.hero-wide){width:calc(100% - 6.4vw);max-width:1498px;margin
 #intro{animation-duration:1.8s}#intro .logo{animation-duration:1.6s}#intro:after{animation-duration:1.5s}
 @media(max-width:1000px){.hero-wide .show-feature-copy{width:55%}.hero-wide .hero-art.show-feature{min-height:350px}}
 @media(max-width:600px){main.home-page{padding-bottom:35px}main.home-page>:not(.hero-wide){width:calc(100% - 40px)}.hero-wide .hero-art.show-feature{min-height:350px;padding:36px 20px 65px}.hero-wide .show-feature-copy{width:82%;max-width:330px;gap:15px}.hero-wide .show-feature-title{font-size:31px}.hero-wide .show-feature-logo{max-width:min(170px,100%);max-height:82px}.hero-wide .show-feature-description{font-size:13px}.hero-wide .show-feature-shade{background:linear-gradient(0deg,var(--bg),rgba(7,8,8,.35) 55%,rgba(7,8,8,.12)),linear-gradient(90deg,rgba(7,8,8,.94),rgba(7,8,8,.72) 48%,rgba(7,8,8,.2))}.show-feature-actions{gap:18px}}
+
+/* Homepage artwork reaches the very top, behind the navigation. */
+body:has(main.home-page){position:relative}
+body:has(main.home-page)>header{position:absolute;inset:0 0 auto;z-index:10;width:100%;border-bottom:0;background:linear-gradient(180deg,rgba(7,8,8,.92),rgba(7,8,8,.55) 65%,transparent)}
+body:has(main.home-page)>header #search{background:rgba(7,8,8,.65)}
+body:has(main.home-page)>#notice:not(:empty){position:relative;z-index:11;margin:0}
+main.home-page{width:100%;max-width:none;margin:0;padding-top:0}
+main.home-page>.hero-wide{width:100%;max-width:none;margin:0 0 24px;padding:0}
+.hero-wide .hero-art.show-feature{width:100%;min-height:470px;padding-top:145px;padding-bottom:85px}
+@media(max-width:1000px){.hero-wide .hero-art.show-feature{min-height:490px;padding-top:180px}}
+@media(max-width:600px){.hero-wide .hero-art.show-feature{min-height:470px;padding-top:175px;padding-bottom:70px}}
