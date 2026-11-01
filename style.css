@@ -133,3 +133,31 @@ body>header #nav a.active:after{background:#f4f4f6;bottom:13px;border-radius:2px
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){:root{--otv-glass:linear-gradient(145deg,#303236,#101114 65%,#202226)}}
 @media(prefers-reduced-transparency:reduce){:root{--otv-glass:linear-gradient(145deg,#303236,#101114 65%,#202226)}body>header,.hub-menu,.service-summary,.service-columns aside{-webkit-backdrop-filter:none;backdrop-filter:none}}
 
+
+/* Motion stays on composited opacity/transform; no looping blur or parallax. */
+@media(prefers-reduced-motion:no-preference){
+ body>header{animation:glass-arrive .55s cubic-bezier(.2,.7,.2,1) both}
+ body>header #nav a,.hub-menu a{transition:color .18s ease,background-color .22s ease,box-shadow .22s ease}
+ body>header #nav a:after{transform-origin:center;transition:transform .22s ease}
+ body>header #search{transition:border-color .22s ease,box-shadow .22s ease}
+ body>header #search:focus-within{border-color:#ffffff70;box-shadow:0 0 0 3px #ffffff0c,inset 0 1px 0 #ffffff14}
+ button,.button,.account-link{transition:transform .2s cubic-bezier(.2,.7,.2,1),background-color .2s ease,border-color .2s ease,box-shadow .2s ease}
+ button:active:not(:disabled),.button:active,.account-link:active{transform:scale(.97)}
+ .card .art img,.programme-episode-art .art img{transition:transform .45s cubic-bezier(.2,.7,.2,1)}
+ .card .art,.programme-episode-art{transition:box-shadow .25s ease,outline-color .25s ease}
+ .programme-play{transition:opacity .2s ease,scale .25s ease;scale:.9}
+ .programme-episode:focus-visible .programme-play{scale:1}
+ .service-group{transition:border-color .25s ease,background-color .25s ease}
+ .service-group[open] .service-components{animation:glass-arrive .3s ease both}
+ dialog[open]{animation:glass-arrive .24s ease both}
+ dialog[open]::backdrop{animation:glass-backdrop .2s ease both}
+ @media(hover:hover) and (pointer:fine){
+  button:hover:not(:disabled),.button:hover,.account-link:hover{transform:translateY(-2px);box-shadow:0 6px 20px #0004,inset 0 1px 0 #ffffff16}
+  .hub-menu a:hover{box-shadow:inset 0 1px 0 #ffffff24}
+  .card:hover .art img,.programme-episode:hover .art img{transform:scale(1.035)}
+  .programme-episode:hover .programme-play{scale:1}
+  .service-group:hover{border-color:#ffffff38}
+ }
+}
+@keyframes glass-arrive{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes glass-backdrop{from{opacity:0}to{opacity:1}}
