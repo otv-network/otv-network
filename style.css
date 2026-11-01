@@ -103,3 +103,33 @@ main.programme-page{width:100%;max-width:none;margin:0;padding:0 0 60px}
 #hub-message{font-size:13px;color:#e2cde9}#hub-preview-area{margin-top:25px;background:#070808;border:1px solid #30373a;border-radius:7px;overflow:hidden}#hub-preview-area .programme-hero{padding:40px 25px;min-height:330px}#hub-preview-area .programme-body{width:calc(100% - 50px);padding-bottom:25px}.hub-preview-label{padding:12px 25px;margin:0;background:#25232b;color:#e2d7ed;font-size:11px;letter-spacing:1px}
 #intro{animation-duration:3s}#intro .logo{animation-duration:2.6s}#intro:after{animation-duration:2.4s}
 @media(max-width:650px){.hub-menu{gap:23px}.hub-builder-grid{grid-template-columns:1fr}.hub-section-list{display:grid;grid-template-columns:1fr 1fr;gap:6px}.hub-builder-row{min-width:0}.hub-prose{font-size:14px}.hub-section-heading h2{font-size:24px}}
+/* OTV dark glass. Artwork, content and application behaviour stay unchanged. */
+:root{--otv-glass:linear-gradient(145deg,rgba(51,53,57,.84),rgba(14,15,18,.92) 55%,rgba(27,29,33,.86));--otv-glass-edge:rgba(255,255,255,.19);--otv-glass-shadow:inset 0 1px 0 rgba(255,255,255,.09),0 12px 32px rgba(0,0,0,.2)}
+body{background:linear-gradient(150deg,#101113 0,#070808 650px);background-color:#070808}
+body>header,body:has(main.home-page)>header,body:has(main.programme-page)>header{width:calc(100% - 48px);margin:16px 24px 0;padding:0 24px;height:72px;gap:28px;border:1px solid var(--otv-glass-edge);border-radius:20px;background:var(--otv-glass);box-shadow:var(--otv-glass-shadow);-webkit-backdrop-filter:blur(22px);backdrop-filter:blur(22px);z-index:10}
+body>header{position:relative}
+body>header #nav{gap:24px;min-width:0}
+body>header .logo{width:72px}
+body>header .logo img{height:auto;object-fit:contain;filter:none}
+body>header #search,body:has(main.home-page)>header #search,body:has(main.programme-page)>header #search{background:linear-gradient(145deg,rgba(255,255,255,.07),rgba(0,0,0,.2));border:1px solid rgba(255,255,255,.18);border-radius:24px;min-width:0;width:clamp(160px,20vw,300px);box-shadow:inset 0 1px 0 #ffffff08}
+body>header .account-link{flex-shrink:0;width:38px;height:38px;display:grid;place-items:center;border:1px solid #ffffff26;border-radius:50%;background:#ffffff08}
+body>header #nav a{white-space:nowrap}
+body>header #nav a.active:after{background:#f4f4f6;bottom:13px;border-radius:2px}
+.hub-menu{position:relative;z-index:2;width:max-content;max-width:100%;height:auto;gap:4px;padding:6px;margin:-30px auto 32px;border:1px solid var(--otv-glass-edge);border-radius:40px;background:var(--otv-glass);box-shadow:var(--otv-glass-shadow);-webkit-backdrop-filter:blur(22px);backdrop-filter:blur(22px);overflow-x:auto;scrollbar-width:thin;order:initial}
+.hub-menu a{height:auto;flex:0 0 auto;padding:15px 25px;border-radius:30px;color:#cbd0d5;line-height:1.25}
+.hub-menu a[aria-current=page]{background:linear-gradient(160deg,#ffffff23,#ffffff0a);box-shadow:inset 0 1px 0 #ffffff12;color:#fff}
+.hub-menu a[aria-current=page]:after{left:32%;right:32%;bottom:4px;height:2px;background:#fff;border-radius:2px}
+.hub-menu a:hover{background-color:#ffffff0c}
+.hub-menu a:focus-visible{outline:2px solid #fff;outline-offset:-3px}
+.programme-actions button,.show-feature-actions .show-browse{background:var(--otv-glass);border:1px solid var(--otv-glass-edge);border-radius:24px;box-shadow:var(--otv-glass-shadow);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);padding:12px 18px}
+.programme-actions .button,.show-feature-actions .primary{border-radius:24px}
+.service-summary{padding:22px;border:1px solid var(--otv-glass-edge);border-radius:14px;background:var(--otv-glass);box-shadow:var(--otv-glass-shadow)}
+.service-group{padding:0 18px;margin-bottom:12px;border:1px solid #ffffff18;border-radius:12px;background:linear-gradient(135deg,#20222699,#101113cc)}
+.service-group:last-of-type{border-bottom:1px solid #ffffff18}
+.service-columns aside{padding:22px;border:1px solid var(--otv-glass-edge);border-radius:14px;background:var(--otv-glass);box-shadow:var(--otv-glass-shadow);align-self:start}
+.service-summary,.service-columns aside{-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
+@media(max-width:1200px){body>header,body:has(main.home-page)>header,body:has(main.programme-page)>header{height:auto;min-height:72px;flex-wrap:wrap;gap:12px 22px;padding:13px 20px}body>header #nav{order:3;flex-basis:100%;width:100%;height:38px;overflow-x:auto;gap:24px}body>header #nav a.active:after{bottom:1px}body>header #search{width:260px}.programme-hero{padding-top:180px}.hero-wide .hero-art.show-feature{padding-top:180px}}
+@media(max-width:600px){body>header,body:has(main.home-page)>header,body:has(main.programme-page)>header{width:calc(100% - 24px);margin:12px 12px 0;padding:12px;gap:12px;border-radius:17px}body>header .logo{width:60px}body>header #search{flex:1;width:100px;padding:0 10px}body>header #search input{font-size:11px}body>header .account-link{width:32px;height:32px}body>header #nav{gap:22px;font-size:12px}.hub-menu{gap:2px;margin-top:-25px;margin-bottom:26px;padding:5px}.hub-menu a{padding:13px 18px;font-size:12px}.service-summary{padding:18px}.service-group{padding:0 12px}.service-columns aside{padding:18px}}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){:root{--otv-glass:linear-gradient(145deg,#303236,#101114 65%,#202226)}}
+@media(prefers-reduced-transparency:reduce){:root{--otv-glass:linear-gradient(145deg,#303236,#101114 65%,#202226)}body>header,.hub-menu,.service-summary,.service-columns aside{-webkit-backdrop-filter:none;backdrop-filter:none}}
+
